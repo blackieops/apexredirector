@@ -1,7 +1,13 @@
-# apex redirector
+```
+░█▀█░█▀█░█▀▀░█░█░░░█▀▄░█▀▀░█▀▄░▀█▀░█▀▄░█▀▀░█▀▀░▀█▀░█▀█░█▀▄
+░█▀█░█▀▀░█▀▀░▄▀▄░░░█▀▄░█▀▀░█░█░░█░░█▀▄░█▀▀░█░░░░█░░█░█░█▀▄
+░▀░▀░▀░░░▀▀▀░▀░▀░░░▀░▀░▀▀▀░▀▀░░▀▀▀░▀░▀░▀▀▀░▀▀▀░░▀░░▀▀▀░▀░▀
+```
 
-This is a small nginx config and Docker image that just redirects all requests
-that hit it to the `www` subdomain for that URL.
+This is a tiny Docker container for redirecting web requests from the apex
+("naked" domains) to the `www.` subdomain.
+
+[Available on Docker Hub](https://hub.docker.com/r/blackieops/apexredirector)
 
 ## Usage
 
@@ -11,70 +17,90 @@ This repo automatically builds on Docker Hub:
 $ docker pull blackieops/apexredirector
 ```
 
-There is no configuration. Just run the container:
+Just run the container:
 
 ```
 $ docker run --rm -p 8080:80 blackieops/apexredirector
 ```
 
-## Kubernetes
+## Configuration
 
-This is mainly useful for Kubernetes deployments.
+Some environment-based configuration is supported:
+
+- **`SECURE=1`** - if set (value is irrelevant), the protocol will always be
+  overwritten to `https`.
+- **`PORT=8080`** - configure the port apexredirector will listen on for
+  connections. Default is `8080`.
+
+## With Kubernetes
+
+`apexredirector` was build for Kubernetes, and is simple to run. For example,
+all you need is...
+
+...a service:
 
 ```yaml
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: apexredirector
+  name: apex
 spec:
   selector:
-    com.blackieops.service: apexredirector
+    com.blackieops.app: apex
   ports:
   - name: http
     port: 80
+```
 
+... a deployment:
+
+```
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: apexredirector
+  name: apex
   labels:
-    com.blackieops.service: apexredirector
+    com.blackieops.app: apex
 spec:
-  replicas:
-  strategy:
-    type: Recreate
+  selector:
+    matchLabels:
+      com.blackieops.app: apex
   template:
     metadata:
       labels:
-        com.blackieops.service: apexredirector
+        com.blackieops.app: apex
     spec:
       containers:
       - image: "blackieops/apexredirector:latest"
-        name: apexredirector
+        name: apex
+		env:
+		- name: SECURE
+		  value: "1"
         ports:
-        - containerPort: 80
+        - containerPort: 8080
       restartPolicy: Always
+```
 
+... and an ingress:
+
+```
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  annotations:
-    certmanager.k8s.io/cluster-issuer: letsencrypt
-  name: apexredirector-ingress
+  name: apex
 spec:
   tls:
   - hosts:
     - example.com
-    secretName: apexredirector-tls
-
+    secretName: tls-example-com
   rules:
   - host: example.com
     http:
       paths:
       - backend:
-          serviceName: apexredirector
-          servicePort: 80
+          serviceName: apex
+          servicePort: 8080
 ```
