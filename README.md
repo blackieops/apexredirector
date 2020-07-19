@@ -75,9 +75,9 @@ spec:
       containers:
       - image: "blackieops/apexredirector:latest"
         name: apex
-		env:
-		- name: SECURE
-		  value: "1"
+        env:
+        - name: SECURE
+          value: "1"
         ports:
         - containerPort: 8080
       restartPolicy: Always
