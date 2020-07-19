@@ -50,12 +50,12 @@ spec:
     com.blackieops.app: apex
   ports:
   - name: http
-    port: 80
+    port: 8080
 ```
 
 ... a deployment:
 
-```
+```yaml
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -85,7 +85,7 @@ spec:
 
 ... and an ingress:
 
-```
+```yaml
 ---
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
