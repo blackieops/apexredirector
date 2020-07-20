@@ -32,6 +32,7 @@ Some environment-based configuration is supported:
 - **`ALLOWED_HOSTS=example.com,example.biz`** - a comma-separated list of domain
   names to allow requests for. If this has a value, all requests for domains not
   in this list will 404.
+- **`SUBDOMAIN=www3`** - set the subdomain to be redirected to. Defaults to `www`.
 - **`PORT=8080`** - configure the port apexredirector will listen on for
   connections. Default is `8080`.
 

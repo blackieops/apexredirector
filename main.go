@@ -23,14 +23,14 @@ func ValidateHost(host string, allowedHosts *[]string) bool {
 	return false
 }
 
-func BuildResponseURL(requestURL *url.URL, forceSecure bool) string {
+func BuildResponseURL(requestURL *url.URL, subdomain string, forceSecure bool) string {
 	if forceSecure {
 		requestURL.Scheme = "https"
 	} else {
 		requestURL.Scheme = "http"
 	}
 
-	requestURL.Host = "www." + requestURL.Host
+	requestURL.Host = subdomain + "." + requestURL.Host
 
 	return requestURL.String()
 }
@@ -59,10 +59,19 @@ func getAllowedHosts() []string {
 	}
 }
 
+func getSubdomain() string {
+	if value, isSet := os.LookupEnv("SUBDOMAIN"); isSet {
+		return value
+	} else {
+		return "www"
+	}
+}
+
 func main() {
 	listenPort := getListenPort()
 	forceSecure := getSecure()
 	allowedHosts := getAllowedHosts()
+	subdomain := getSubdomain()
 
 	fmt.Println("\n" +
 		"░█▀█░█▀█░█▀▀░█░█░░░█▀▄░█▀▀░█▀▄░▀█▀░█▀▄░█▀▀░█▀▀░▀█▀░█▀█░█▀▄\n" +
@@ -81,7 +90,7 @@ func main() {
 		requestURL.Host = r.Host
 
 		if ValidateHost(requestURL.Host, &allowedHosts) {
-			http.Redirect(w, r, BuildResponseURL(&requestURL, forceSecure), 308)
+			http.Redirect(w, r, BuildResponseURL(&requestURL, subdomain, forceSecure), 308)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 		}
