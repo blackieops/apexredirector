@@ -40,3 +40,30 @@ func TestBuildResponseURLPreservesPathInsecure(t *testing.T) {
 		t.Errorf("BuildResponseURL generated incorrect URL: %s", result)
 	}
 }
+
+func TestValidateHostWhenHostIsAllowed(t *testing.T) {
+	allowedHosts := []string{"example.com"}
+	result := ValidateHost("example.com", &allowedHosts)
+
+	if result != true {
+		t.Errorf("ValidateHost failed to validate host correctly.")
+	}
+}
+
+func TestValidateHostWhenHostIsDisallowed(t *testing.T) {
+	allowedHosts := []string{"example.com"}
+	result := ValidateHost("example.biznetcom", &allowedHosts)
+
+	if result != false {
+		t.Errorf("ValidateHost allowed invalid host.")
+	}
+}
+
+func TestValidateHostWhenAllowedUnset(t *testing.T) {
+	allowedHosts := []string{}
+	result := ValidateHost("example.com", &allowedHosts)
+
+	if result != true {
+		t.Errorf("ValidateHost blocked request when no allowed hosts are set.")
+	}
+}
