@@ -38,6 +38,7 @@ func main() {
 	forceSecure := getSecure()
 	allowedHosts := getAllowedHosts()
 	subdomain := getSubdomain()
+	hostOverride := getHostOverride()
 
 	fmt.Println("\n" +
 		"░█▀█░█▀█░█▀▀░█░█░░░█▀▄░█▀▀░█▀▄░▀█▀░█▀▄░█▀▀░█▀▀░▀█▀░█▀█░█▀▄\n" +
@@ -50,10 +51,16 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("method=GET host=%s\n", r.Host)
 
-		// There is no "full URL" field in the request... So we have to
-		// manually add the host from the request into our own url object.
 		requestURL := *r.URL
-		requestURL.Host = r.Host
+
+		if hostOverride != "" {
+			// If HOST_OVERRIDE is set, use that instead of the request host.
+			requestURL.Host = hostOverride
+		} else {
+			// There is no "full URL" field in the request... So we have to
+			// manually add the host from the request into our own url object.
+			requestURL.Host = r.Host
+		}
 
 		if ValidateHost(requestURL.Host, &allowedHosts) {
 			http.Redirect(w, r, BuildResponseURL(&requestURL, subdomain, forceSecure), 308)

@@ -36,3 +36,11 @@ func getSubdomain() string {
 		return "www"
 	}
 }
+
+func getHostOverride() string {
+	if value, isSet := os.LookupEnv("HOST_OVERRIDE"); isSet {
+		return value
+	} else {
+		return ""
+	}
+}
