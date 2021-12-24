@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -xeuf -o pipefail
+
+# -----------------------------------------------------------------------------
+# This script builds the Docker container image and pushes it to Docker Hub. It
+# is expected that you already have the Docker CLI installed and that you have
+# access to push to the `blackieops/apexredirector` Docker Hub repository.
+#
+# The script takes one optional argument: the version you are publishing. This
+# will be the tag we use for the image. "latest" is also pushed.
+#
+# If no version is specified, only "latest" will be pushed.
+# -----------------------------------------------------------------------------
+
+TAG="${1:-latest}"
+
+main() {
+	for IMAGE in blackieops/apexredirector:$TAG blackieops/apexredirector:latest
+	do
+		docker build -t "$IMAGE" .
+		docker push "$IMAGE"
+	done
+}
+
+main
