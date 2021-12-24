@@ -24,7 +24,7 @@ By default, `apexredirector` will look in the current directory for a
 An official Docker container image is published [on Docker Hub][0].
 
 ```
-$ docker run -p 8080:8080 blackieops/apexredirector
+$ docker run -p 8080:8080 -v my_config.yml:/config.yml blackieops/apexredirector
 ```
 
 ## Configuration
