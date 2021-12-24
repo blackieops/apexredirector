@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -xeuf -o pipefail
+
+# -----------------------------------------------------------------------------
+# This script generates a matrix of static binaries for distribution.
+#
+# There isn't much here; really this is just a convenience script to run
+# `go build` a bunch of times automatically.
+# -----------------------------------------------------------------------------
+
+TARGET_OS=(
+	"darwin"
+	"linux"
+)
+
+TARGET_ARCH=(
+	"arm64"
+	"amd64"
+)
+
+main() {
+	mkdir -p release
+
+	for OS in "${TARGET_OS[@]}" ; do
+		for ARCH in "${TARGET_ARCH[@]}" ; do
+			CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build -o "release/apexredirector-$OS-$ARCH" .
+		done
+	done
+}
+
+main
