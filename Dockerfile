@@ -1,10 +1,9 @@
-FROM alpine:3.12
-ENV CGO_ENABLED=1 GOOS=linux
-RUN apk --update --no-cache add go
-WORKDIR /go/src/github.com/blackieops/apexredirector
+FROM golang:1.17-alpine
+ENV CGO_ENABLED=0 GOOS=linux
+WORKDIR /app
 ADD . .
-RUN go build -a -ldflags '-linkmode external -extldflags "-static"' .
+RUN go build -o apexredirector .
 
 FROM scratch
-COPY --from=0 /go/src/github.com/blackieops/apexredirector/apexredirector /apexredirector
+COPY --from=0 /app/apexredirector /apexredirector
 CMD ["/apexredirector"]
