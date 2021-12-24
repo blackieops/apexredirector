@@ -30,7 +30,12 @@ main() {
 
 	for OS in "${TARGET_OS[@]}" ; do
 		for ARCH in "${TARGET_ARCH[@]}" ; do
-			CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build -o "release/apexredirector-$VERSION-$OS-$ARCH" .
+			BASENAME="apexredirector-$VERSION-$OS-$ARCH"
+			CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build -o "release/$BASENAME" .
+			pushd release
+				tar -czf "$BASENAME.tar.gz" "$BASENAME"
+				shasum -a 512 "$BASENAME" > "$BASENAME.sha512"
+			popd
 		done
 	done
 }
