@@ -20,8 +20,8 @@ if [ "$VERSION" = "" ] ; then
 fi
 
 main() {
-	bin/build-releases
-	bin/publish-container
+	bin/build-releases "$VERSION"
+	bin/publish-container "$VERSION"
 	git tag "$VERSION"
 	git push --tags
 }

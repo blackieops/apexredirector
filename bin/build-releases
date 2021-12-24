@@ -18,12 +18,19 @@ TARGET_ARCH=(
 	"amd64"
 )
 
+VERSION="${1:-}"
+
+if [ "$VERSION" = "" ] ; then
+	echo "You must specify a version number as the first argument."
+	exit 1
+fi
+
 main() {
 	mkdir -p release
 
 	for OS in "${TARGET_OS[@]}" ; do
 		for ARCH in "${TARGET_ARCH[@]}" ; do
-			CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build -o "release/apexredirector-$OS-$ARCH" .
+			CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build -o "release/apexredirector-$VERSION-$OS-$ARCH" .
 		done
 	done
 }
