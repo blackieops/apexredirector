@@ -1,0 +1,6 @@
+---
+secure: false
+
+redirects:
+- from_host: "example.com"
+  to_host: "www.example.com"

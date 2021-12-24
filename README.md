@@ -4,107 +4,69 @@
 ░▀░▀░▀░░░▀▀▀░▀░▀░░░▀░▀░▀▀▀░▀▀░░▀▀▀░▀░▀░▀▀▀░▀▀▀░░▀░░▀▀▀░▀░▀
 ```
 
-This is a tiny Docker container for redirecting web requests from the apex
-("naked" domains) to the `www.` subdomain.
+This is a tiny Go program for redirecting web requests from one hostname to
+another. Originally intended for redirecting to/from `www` subdomains, but
+configurable to redirect to any host.
 
-[Available on Docker Hub](https://hub.docker.com/r/blackieops/apexredirector)
+[Available on Docker Hub][0]
 
 ## Usage
 
-This repo automatically builds on Docker Hub:
-
 ```
-$ docker pull blackieops/apexredirector
+./apexredirector [-config <path>]
 ```
 
-Just run the container:
+By default, `apexredirector` will look in the current directory for a
+`config.yml`; otherwise, you can provide a custom file path with `-config`.
+
+### Docker
+
+An official Docker container image is published [on Docker Hub][0].
 
 ```
-$ docker run --rm -p 8080:80 blackieops/apexredirector
+$ docker run -p 8080:8080 blackieops/apexredirector
 ```
 
 ## Configuration
 
-Some environment-based configuration is supported:
+`apexredirector` isn't very useful unconfigured, as without any redirects it
+will just return an error for every request.
 
-- **`SECURE=1`** - if set (value is irrelevant), the protocol will always be
-  overwritten to `https`.
-- **`ALLOWED_HOSTS=example.com,example.biz`** - a comma-separated list of domain
-  names to allow requests for. If this has a value, all requests for domains not
-  in this list will 404. If unset, all hosts will be allowed.
-- **`SUBDOMAIN=www3`** - set the subdomain to be redirected to. Defaults to `www`.
-- **`PORT=8080`** - configure the port apexredirector will listen on for
-  connections. Default is `8080`.
-
-## With Kubernetes
-
-`apexredirector` was build for Kubernetes, and is simple to run. For example,
-all you need is...
-
-...a service:
+Here's an example configuration file:
 
 ```yaml
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: apex
-spec:
-  selector:
-    com.blackieops.app: apex
-  ports:
-  - name: http
-    port: 8080
+# If true, will always redirect to `https`; if false, will use the same
+# protocol as the request. Defaults to `true`.
+secure: true
+
+# A list of objects which represent each redirect that will be served. Any host
+# not listed as a "from" in this list will return an HTTP 404 response.
+redirects:
+  - from_host: "example.com"
+    to_host: "www.example.com"
+
+  - from_host: "contoso.com"
+    to_host: "microsoft.com"
 ```
 
-... a deployment:
+To control which port `apexredirector` listens on, you can set the `PORT`
+environment variable.
 
-```yaml
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: apex
-  labels:
-    com.blackieops.app: apex
-spec:
-  selector:
-    matchLabels:
-      com.blackieops.app: apex
-  template:
-    metadata:
-      labels:
-        com.blackieops.app: apex
-    spec:
-      containers:
-      - image: "blackieops/apexredirector:latest"
-        name: apex
-        env:
-        - name: SECURE
-          value: "1"
-        ports:
-        - containerPort: 8080
-      restartPolicy: Always
+## Development
+
+This is a very standard Go application.
+
+To run the program locally:
+
+```
+$ go run .
 ```
 
-... and an ingress:
+To run the test suite:
 
-```yaml
----
-apiVersion: networking.k8s.io/v1beta1
-kind: Ingress
-metadata:
-  name: apex
-spec:
-  tls:
-  - hosts:
-    - example.com
-    secretName: tls-example-com
-  rules:
-  - host: example.com
-    http:
-      paths:
-      - backend:
-          serviceName: apex
-          servicePort: 8080
 ```
+$ go test
+```
+
+[0]: https://hub.docker.com/r/blackieops/apexredirector

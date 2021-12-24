@@ -1,44 +1,26 @@
 package main
 
 import (
+	"errors"
+	"flag"
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 )
 
-func ValidateHost(host string, allowedHosts *[]string) bool {
-	if len(*allowedHosts) == 0 {
-		// If no allowlist has been set, just allow everything.
-		return true
-	}
-
-	for _, a := range *allowedHosts {
-		if a == host {
-			return true
-		}
-	}
-
-	return false
-}
-
-func BuildResponseURL(requestURL *url.URL, subdomain string, forceSecure bool) string {
-	if forceSecure {
-		requestURL.Scheme = "https"
-	} else {
-		requestURL.Scheme = "http"
-	}
-
-	requestURL.Host = subdomain + "." + requestURL.Host
-
-	return requestURL.String()
-}
-
 func main() {
+	var configPath string
+
+	flag.StringVar(&configPath, "config", "config.yml", "Provide a path to the configuration yaml file. Defaults to config.yml in the current directory.")
+	flag.Parse()
+
+	config, err := ReadConfig(configPath)
+	if err != nil {
+		panic(err)
+	}
+
 	listenPort := getListenPort()
-	forceSecure := getSecure()
-	allowedHosts := getAllowedHosts()
-	subdomain := getSubdomain()
-	hostOverride := getHostOverride()
 
 	fmt.Println("\n" +
 		"░█▀█░█▀█░█▀▀░█░█░░░█▀▄░█▀▀░█▀▄░▀█▀░█▀▄░█▀▀░█▀▀░▀█▀░█▀█░█▀▄\n" +
@@ -52,22 +34,42 @@ func main() {
 		fmt.Printf("method=GET host=%s\n", r.Host)
 
 		requestURL := *r.URL
+		redirect, err := GetRedirectRule(config.Redirects, r.Host)
 
-		if hostOverride != "" {
-			// If HOST_OVERRIDE is set, use that instead of the request host.
-			requestURL.Host = hostOverride
-		} else {
-			// There is no "full URL" field in the request... So we have to
-			// manually add the host from the request into our own url object.
-			requestURL.Host = r.Host
-		}
-
-		if ValidateHost(requestURL.Host, &allowedHosts) {
-			http.Redirect(w, r, BuildResponseURL(&requestURL, subdomain, forceSecure), 308)
+		if err == nil {
+			http.Redirect(w, r, BuildResponseURL(&requestURL, redirect, config.Secure), 308)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	})
 
 	http.ListenAndServe(listenPort, nil)
+}
+
+func GetRedirectRule(redirects []RedirectConfig, host string) (*RedirectConfig, error) {
+	for _, redirect := range redirects {
+		if redirect.FromHost == host {
+			return &redirect, nil
+		}
+	}
+
+	return &RedirectConfig{}, errors.New("Redirect host is not configured.")
+}
+
+func BuildResponseURL(requestURL *url.URL, redirect *RedirectConfig, forceSecure bool) string {
+	if forceSecure {
+		requestURL.Scheme = "https"
+	}
+
+	requestURL.Host = redirect.ToHost
+
+	return requestURL.String()
+}
+
+func getListenPort() string {
+	if port, isSet := os.LookupEnv("PORT"); isSet {
+		return ":" + port
+	}
+
+	return ":8080"
 }

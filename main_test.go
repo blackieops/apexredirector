@@ -2,12 +2,61 @@ package main
 
 import (
 	"net/url"
+	"os"
 	"testing"
 )
 
+func TestGetListenPortWhenIsNotSet(t *testing.T) {
+	os.Unsetenv("PORT")
+
+	actual := getListenPort()
+
+	if actual != ":8080" {
+		t.Errorf("getListenPort had unexpected default '%s'", actual)
+	}
+}
+
+func TestGetListenPortWhenIsSet(t *testing.T) {
+	os.Setenv("PORT", "9876")
+
+	actual := getListenPort()
+
+	if actual != ":9876" {
+		t.Errorf("getListenPort had incorrect port '%s'", actual)
+	}
+}
+
+func TestGetRedirectRuleWhenHostMatches(t *testing.T) {
+	redirects := []RedirectConfig{
+		{FromHost: "example.com", ToHost: "www.example.com"},
+		{FromHost: "example.net", ToHost: "www.example.net"},
+	}
+	result, err := GetRedirectRule(redirects, "example.com")
+
+	if err != nil {
+		t.Errorf("GetRedirectRule did not find a host, despite being configured.")
+	}
+
+	if result.ToHost != "www.example.com" {
+		t.Errorf("GetRedirectRule found the wrong redirect for the host.")
+	}
+}
+
+func TestGetRedirectRuleWhenHostIsUnknown(t *testing.T) {
+	redirects := []RedirectConfig{
+		{FromHost: "example.com", ToHost: "www.example.com"},
+	}
+	_, err := GetRedirectRule(redirects, "example.net")
+
+	if err == nil {
+		t.Errorf("GetRedirectRule returned a redirect when it should not have.")
+	}
+}
+
 func TestBuildResponseURLAddsWWWAndProtocol(t *testing.T) {
 	source, _ := url.Parse("https://example.com")
-	result := BuildResponseURL(source, "www", true)
+	redirect := &RedirectConfig{FromHost: "example.com", ToHost: "www.example.com"}
+	result := BuildResponseURL(source, redirect, true)
 
 	if result != "https://www.example.com" {
 		t.Errorf("BuildResponseURL generated incorrect URL: %s", result)
@@ -16,7 +65,8 @@ func TestBuildResponseURLAddsWWWAndProtocol(t *testing.T) {
 
 func TestBuildResponseURLAddsWWWAndProtocolInsecure(t *testing.T) {
 	source, _ := url.Parse("http://example.com")
-	result := BuildResponseURL(source, "www", false)
+	redirect := &RedirectConfig{FromHost: "example.com", ToHost: "www.example.com"}
+	result := BuildResponseURL(source, redirect, false)
 
 	if result != "http://www.example.com" {
 		t.Errorf("BuildResponseURL generated incorrect URL: %s", result)
@@ -25,7 +75,8 @@ func TestBuildResponseURLAddsWWWAndProtocolInsecure(t *testing.T) {
 
 func TestBuildResponseURLPreservesPath(t *testing.T) {
 	source, _ := url.Parse("https://example.com/asdf/one/2")
-	result := BuildResponseURL(source, "www", true)
+	redirect := &RedirectConfig{FromHost: "example.com", ToHost: "www.example.com"}
+	result := BuildResponseURL(source, redirect, true)
 
 	if result != "https://www.example.com/asdf/one/2" {
 		t.Errorf("BuildResponseURL generated incorrect URL: %s", result)
@@ -34,45 +85,20 @@ func TestBuildResponseURLPreservesPath(t *testing.T) {
 
 func TestBuildResponseURLPreservesPathInsecure(t *testing.T) {
 	source, _ := url.Parse("http://example.com/asdf/one/2")
-	result := BuildResponseURL(source, "www", false)
+	redirect := &RedirectConfig{FromHost: "example.com", ToHost: "www.example.com"}
+	result := BuildResponseURL(source, redirect, false)
 
 	if result != "http://www.example.com/asdf/one/2" {
 		t.Errorf("BuildResponseURL generated incorrect URL: %s", result)
 	}
 }
 
-func TestBuildResponseURLWithCustomSubdomain(t *testing.T) {
+func TestBuildResponseURLWithSomethingOtherThanWWW(t *testing.T) {
 	source, _ := url.Parse("http://example.com/asdf/one/2")
-	result := BuildResponseURL(source, "blog", false)
+	redirect := &RedirectConfig{FromHost: "example.com", ToHost: "blog.example.com"}
+	result := BuildResponseURL(source, redirect, false)
 
 	if result != "http://blog.example.com/asdf/one/2" {
 		t.Errorf("BuildResponseURL generated incorrect URL: %s", result)
-	}
-}
-
-func TestValidateHostWhenHostIsAllowed(t *testing.T) {
-	allowedHosts := []string{"example.com"}
-	result := ValidateHost("example.com", &allowedHosts)
-
-	if result != true {
-		t.Errorf("ValidateHost failed to validate host correctly.")
-	}
-}
-
-func TestValidateHostWhenHostIsDisallowed(t *testing.T) {
-	allowedHosts := []string{"example.com"}
-	result := ValidateHost("example.biznetcom", &allowedHosts)
-
-	if result != false {
-		t.Errorf("ValidateHost allowed invalid host.")
-	}
-}
-
-func TestValidateHostWhenAllowedUnset(t *testing.T) {
-	allowedHosts := []string{}
-	result := ValidateHost("example.com", &allowedHosts)
-
-	if result != true {
-		t.Errorf("ValidateHost blocked request when no allowed hosts are set.")
 	}
 }

@@ -1,3 +1,6 @@
 # Ignore compiled binaries
 /main
 /apexredirector
+
+# Ignore local configuration
+/config.yml
