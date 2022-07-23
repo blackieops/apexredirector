@@ -8,8 +8,6 @@ This is a tiny Go program for redirecting web requests from one hostname to
 another. Originally intended for redirecting to/from `www` subdomains, but
 configurable to redirect to any host.
 
-[Available on Docker Hub][0]
-
 ## Usage
 
 ```
@@ -21,10 +19,10 @@ By default, `apexredirector` will look in the current directory for a
 
 ### Docker
 
-An official Docker container image is published [on Docker Hub][0].
+An official Docker container image is published GitHub Packages.
 
 ```
-$ docker run -p 8080:8080 -v my_config.yml:/config.yml blackieops/apexredirector
+$ docker run -p 8080:8080 -v my_config.yml:/config.yml ghcr.io/blackieops/apexredirector
 ```
 
 ## Configuration
@@ -68,5 +66,3 @@ To run the test suite:
 ```
 $ go test
 ```
-
-[0]: https://hub.docker.com/r/blackieops/apexredirector
