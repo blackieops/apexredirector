@@ -1,4 +1,4 @@
-module github.com/blackieops/apexredirector
+module go.b8s.dev/apexredirector
 
 go 1.17
 
