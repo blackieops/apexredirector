@@ -22,13 +22,18 @@ func main() {
 
 	listenPort := getListenPort()
 
-	fmt.Println("\n" +
+	fmt.Printf("\n" +
 		"░█▀█░█▀█░█▀▀░█░█░░░█▀▄░█▀▀░█▀▄░▀█▀░█▀▄░█▀▀░█▀▀░▀█▀░█▀█░█▀▄\n" +
 		"░█▀█░█▀▀░█▀▀░▄▀▄░░░█▀▄░█▀▀░█░█░░█░░█▀▄░█▀▀░█░░░░█░░█░█░█▀▄\n" +
 		"░▀░▀░▀░░░▀▀▀░▀░▀░░░▀░▀░▀▀▀░▀▀░░▀▀▀░▀░▀░▀▀▀░▀▀▀░░▀░░▀▀▀░▀░▀\n" +
 		"\n")
 
 	fmt.Println("Listening on HTTP " + listenPort + "...\n")
+
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("method=GET healthz=true")
+		w.WriteHeader(http.StatusOK)
+	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("method=GET host=%s\n", r.Host)
