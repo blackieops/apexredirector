@@ -36,10 +36,16 @@ func main() {
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("method=GET host=%s\n", r.Host)
+		var host string
+		if val := r.Header.Get("x-forwarded-host"); val != "" {
+			host = val
+		} else {
+			host = r.Host
+		}
+		fmt.Printf("method=GET host=%s\n", host)
 
 		requestURL := *r.URL
-		redirect, err := GetRedirectRule(config.Redirects, r.Host)
+		redirect, err := GetRedirectRule(config.Redirects, host)
 
 		if err == nil {
 			http.Redirect(w, r, BuildResponseURL(&requestURL, redirect, config.Secure), 308)
